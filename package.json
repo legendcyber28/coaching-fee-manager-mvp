@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --experimental-strip-types --test tests/core.test.mjs tests/import.test.mjs"
+    "test": "node --experimental-strip-types --test tests/core.test.mjs tests/import.test.mjs tests/billing.test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
