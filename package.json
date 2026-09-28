@@ -11,17 +11,17 @@
     "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
-    "next": "15.5.12",
-    "react": "19.1.1",
-    "react-dom": "19.1.1",
     "@prisma/client": "6.19.3",
-    "jspdf": "3.0.3"
+    "jspdf": "^4.2.1",
+    "next": "^15.5.26",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
   },
   "devDependencies": {
-    "prisma": "6.19.3",
-    "typescript": "^5.9.3",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/node": "^22"
+    "prisma": "6.19.3",
+    "typescript": "^5.9.3"
   }
 }
