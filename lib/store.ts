@@ -67,8 +67,8 @@ export function receipt(s:State,id:string){const r=s.receipts.find(x=>x.id===id)
 export async function access(){return googleAccess()}
 type Access=NonNullable<Awaited<ReturnType<typeof googleAccess>>>;
 async function tenant(a:Access){await schema();const sql=db();const sub=a.session.sub;let rows=await sql`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub}`;if(!rows.length){
- // Existing Google Sheet is imported once, before the first central write. Never replace an existing DB row.
- const old=await load(a.access);const state=validateBackup(old.state);await sql`INSERT INTO tenants(sub,email,name,data,sheet_id,refresh_cipher) VALUES(${sub},${a.session.email},${a.session.name},${sql.json(state)},${old.id},${seal({refresh:a.session.refresh})}) ON CONFLICT(sub) DO NOTHING`;rows=await sql`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub}`;
+ // Serialize first-use migration by immutable Google sub across every app instance.
+ await sql.begin(async tx=>{await tx`SELECT pg_advisory_xact_lock(hashtextextended(${sub},0))`;const exists=await tx`SELECT sub FROM tenants WHERE sub=${sub}`;if(exists.length)return;const old=await load(a.access);const state=validateBackup(old.state);await tx`INSERT INTO tenants(sub,email,name,data,sheet_id,refresh_cipher) VALUES(${sub},${a.session.email},${a.session.name},${tx.json(state)},${old.id},${seal({refresh:a.session.refresh})})`});rows=await sql`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub}`;
  }
  if(rows[0].deleted_at)throw Error('This account is pending deletion. Contact support.');
  if(rows[0].suspended && !(await isOwner(sub,a.session.email)))throw Error('This account is suspended. Contact the app owner. Your data is not deleted.');
