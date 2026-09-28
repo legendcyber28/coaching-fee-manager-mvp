@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --experimental-strip-types --test tests/core.test.mjs tests/store.test.mjs"
+    "test": "node --experimental-strip-types --test tests/core.test.mjs tests/import.test.mjs"
   },
   "dependencies": {
     "jspdf": "^4.2.1",

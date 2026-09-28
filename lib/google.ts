@@ -7,7 +7,7 @@ const scope='openid email profile https://www.googleapis.com/auth/drive.file';
 function key(){const s=process.env.SESSION_SECRET;if(!s||s.length<32)throw Error('SESSION_SECRET must be at least 32 characters');return createHash('sha256').update(s).digest()}
 export function seal(data:object){const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key(),iv);const body=Buffer.concat([cipher.update(JSON.stringify(data)),cipher.final()]);return Buffer.concat([iv,cipher.getAuthTag(),body]).toString('base64url')}
 export function unseal<T>(value:string):T|null{try{const b=Buffer.from(value,'base64url');if(b.length<29)return null;const decipher=createDecipheriv('aes-256-gcm',key(),b.subarray(0,12));decipher.setAuthTag(b.subarray(12,28));return JSON.parse(Buffer.concat([decipher.update(b.subarray(28)),decipher.final()]).toString()) as T}catch{return null}}
-export type Session={email:string;sub:string;name:string;access:string;refresh:string;expires:number;until:number};
+export type Session={email:string;sub:string;name:string;picture?:string;access:string;refresh:string;expires:number;until:number};
 export function cookieOptions(maxAge:number){return {httpOnly:true,sameSite:'lax' as const,secure:process.env.NODE_ENV==='production',path:'/',maxAge}}
 export function origin(){const u=process.env.APP_URL;if(!u)throw Error('APP_URL is required');return new URL(u).origin}
 export function clientId(){if(!process.env.GOOGLE_CLIENT_ID)throw Error('GOOGLE_CLIENT_ID is required');return process.env.GOOGLE_CLIENT_ID}
