@@ -1,0 +1,4 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {feeStatus,toPaise,monthValid,dateOnly} from '../lib/core.ts';
+test('amount conversion and validation',()=>{assert.equal(toPaise(2000),200000);assert.equal(toPaise(1000.50),100050);assert.throws(()=>toPaise(-2));assert.throws(()=>toPaise(1.001))});
+test('fee states',()=>{let due=new Date('2026-10-15T00:00:00Z');let now=new Date('2026-09-28T00:00:00Z');assert.equal(feeStatus(200000,0,due,now),'Pending');assert.equal(feeStatus(200000,100000,due,now),'Partial');assert.equal(feeStatus(200000,200000,due,now),'Paid');assert.equal(feeStatus(200000,100000,new Date('2026-09-01T00:00:00Z'),now),'Overdue')});
+test('month and date checks',()=>{assert.ok(monthValid('2026-09'));assert.ok(!monthValid('2026-13'));assert.equal(dateOnly('2026-09-28').toISOString().slice(0,10),'2026-09-28');assert.throws(()=>dateOnly('2026-02-30'))});

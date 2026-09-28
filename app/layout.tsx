@@ -1,0 +1,1 @@
+import type {Metadata} from 'next';import './style.css';export const metadata:Metadata={title:'Fee Manager',description:'Coaching Institute Fee Manager'};export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}
