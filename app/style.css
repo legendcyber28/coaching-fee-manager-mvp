@@ -14,3 +14,5 @@
 @media(min-width:1100px){.backup-panel td.actions{min-width:175px;max-width:200px;white-space:normal;flex-wrap:wrap;gap:5px 10px}.backup-panel td.actions button{white-space:normal;text-align:left}}
 @media(max-width:700px){.sidebar-scrim{position:fixed;inset:0;border:0;background:#0d1c1970;z-index:14}.sidebar.expanded{z-index:15}}
 @media(min-width:701px){.sidebar-scrim{display:none}}
+.scroll-hint{display:none;color:var(--sub);font-size:11px;margin:4px 0 10px}
+@media(max-width:700px){.scroll-hint{display:block}.backup-panel .table-wrap{overflow-x:auto;overscroll-behavior-inline:contain}.backup-panel .table-wrap table{min-width:890px}}
