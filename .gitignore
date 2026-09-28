@@ -8,3 +8,5 @@ prisma/*.db-journal
 *.sqlite-journal
 artifacts/
 *.zip
+next-env.d.ts
+*.tsbuildinfo
