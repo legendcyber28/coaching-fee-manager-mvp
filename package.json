@@ -9,8 +9,10 @@
     "test": "node --experimental-strip-types --test tests/core.test.mjs tests/import.test.mjs"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "jspdf": "^4.2.1",
     "next": "^15.5.26",
+    "postgres": "^3.4.9",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },

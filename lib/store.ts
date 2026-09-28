@@ -1,7 +1,8 @@
-import {googleAccess,withSession,Session} from './google';
+import {googleAccess,withSession,seal} from './google';
 import {NextResponse} from 'next/server';
 import {dateOnly,feeStatus,monthValid,toPaise} from './core';
 import {randomUUID} from 'node:crypto';
+import {db,schema,isOwner} from './db';
 
 type Row=Record<string,any>;
 type State={version:1;batches:Row[];students:Row[];fees:Row[];payments:Row[];receipts:Row[];expenses?:Row[];attendance?:Row[];profile?:{photo:string}};
@@ -64,9 +65,21 @@ function change(s:State,resource:string,method:string,b:Row){if(method==='PATCH'
  throw Error('Cannot edit financial records')}
 export function receipt(s:State,id:string){const r=s.receipts.find(x=>x.id===id);if(!r)return null;const p=payment(s,r.paymentId);if(!p)return null;return {...r,payment:shapedPayment(s,p),instituteName:process.env.INSTITUTE_NAME||'ABC Coaching'}}
 export async function access(){return googleAccess()}
-export async function readStore(a:NonNullable<Awaited<ReturnType<typeof googleAccess>>>){const {state}=await load(a.access);return state}
+type Access=NonNullable<Awaited<ReturnType<typeof googleAccess>>>;
+async function tenant(a:Access){await schema();const sql=db();const sub=a.session.sub;let rows=await sql`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub}`;if(!rows.length){
+ // Existing Google Sheet is imported once, before the first central write. Never replace an existing DB row.
+ const old=await load(a.access);const state=validateBackup(old.state);await sql`INSERT INTO tenants(sub,email,name,data,sheet_id,refresh_cipher) VALUES(${sub},${a.session.email},${a.session.name},${sql.json(state)},${old.id},${seal({refresh:a.session.refresh})}) ON CONFLICT(sub) DO NOTHING`;rows=await sql`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub}`;
+ }
+ if(rows[0].deleted_at)throw Error('This account is pending deletion. Contact support.');
+ if(rows[0].suspended && !(await isOwner(sub,a.session.email)))throw Error('This account is suspended. Contact the app owner. Your data is not deleted.');
+ return rows[0];}
+export async function readStore(a:Access){return (await tenant(a)).data as State}
 export function getResult(s:State,resource:string,url:URL){return output(s,resource,url)}
-// A single Node instance serializes writes, but Sheets does not offer a multi-instance atomic compare-and-swap.
-let queue=Promise.resolve();export async function mutate(a:NonNullable<Awaited<ReturnType<typeof googleAccess>>>,resource:string,method:string,b:Row){const run=async()=>{const {state,id,oldCount}=await load(a.access);const result=change(state,resource,method,b);await save(a.access,id,state,oldCount);return result};const next=queue.then(run,run);queue=next.then(()=>{},()=>{});return next}
-export async function restore(a:NonNullable<Awaited<ReturnType<typeof googleAccess>>>,raw:unknown){const replacement=validateBackup(raw);const run=async()=>{const {id,oldCount}=await load(a.access);await save(a.access,id,replacement,oldCount);return {batches:replacement.batches.length,students:replacement.students.length,fees:replacement.fees.length,payments:replacement.payments.length}};const next=queue.then(run,run);queue=next.then(()=>{},()=>{});return next}
+async function update(a:Access,changeState:(state:State)=>unknown){await tenant(a);const sql=db();const sub=a.session.sub;const {result,state}=await sql.begin(async tx=>{const [row]=await tx`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub} FOR UPDATE`;if(!row||row.deleted_at||row.suspended&&!(await isOwner(sub,a.session.email)))throw Error('Account unavailable');const state=row.data as State;const result=changeState(state);await tx`UPDATE tenants SET data=${tx.json(state)},email=${a.session.email},name=${a.session.name},mirror_error='pending' WHERE sub=${sub}`;return {result,state}});
+ // Lock the row across the mirror call so concurrent instances cannot write an older backup last.
+ try{await sql.begin(async tx=>{const [current]=await tx`SELECT data,sheet_id,mirror_error FROM tenants WHERE sub=${sub} FOR UPDATE`;if(!current?.mirror_error)return;const old=await load(a.access);await save(a.access,old.id,current.data as State,old.oldCount);await tx`UPDATE tenants SET sheet_id=${old.id},mirror_error=NULL,last_mirror_at=now() WHERE sub=${sub}`})}
+ catch(e){await sql`UPDATE tenants SET mirror_error=${e instanceof Error?e.message.slice(0,180):'Sheet sync failed'} WHERE sub=${sub} AND mirror_error='pending'`.catch(()=>{})}
+ return result;}
+export async function mutate(a:Access,resource:string,method:string,b:Row){return update(a,s=>change(s,resource,method,b))}
+export async function restore(a:Access,raw:unknown){const replacement=validateBackup(raw);return update(a,s=>{Object.assign(s,replacement);return {batches:s.batches.length,students:s.students.length,fees:s.fees.length,payments:s.payments.length}})}
 export {withSession};
