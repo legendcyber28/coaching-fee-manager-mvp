@@ -4,17 +4,17 @@ services:
     runtime: node
     plan: free
     buildCommand: npm ci && npm run build
-    startCommand: npm run db:push && npm run db:seed && npm run start
+    startCommand: npm run start
     envVars:
       - key: NODE_VERSION
         value: 22.23.3
-      - key: DATABASE_URL
-        value: file:./dev.db
-      - key: ADMIN_EMAIL
-        value: demo@abc-coaching.example
-      - key: ADMIN_PASSWORD
-        value: DemoFeeManager2026!
+      - key: APP_URL
+        value: https://coaching-fee-manager-mvp.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
       - key: INSTITUTE_NAME
-        value: ABC Coaching Demo
+        value: ABC Coaching
       - key: SESSION_SECRET
         generateValue: true

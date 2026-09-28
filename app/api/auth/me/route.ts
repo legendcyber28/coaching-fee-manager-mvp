@@ -1,1 +1,2 @@
-import {admin} from '@/lib/auth';import {NextResponse} from 'next/server';export async function GET(){const a=await admin();return NextResponse.json(a||{error:'Not signed in'},{status:a?200:401})}
+import {NextResponse} from 'next/server';import {googleAccess,withSession} from '@/lib/google';
+export async function GET(){const a=await googleAccess();if(!a)return NextResponse.json({error:'Not signed in'},{status:401});return withSession(NextResponse.json({email:a.session.email,name:a.session.name}),a)}
