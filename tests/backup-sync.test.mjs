@@ -1,2 +1,4 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';const src=fs.readFileSync(new URL('../lib/store.ts',import.meta.url),'utf8');
-test('manual readable-tab sync cannot claim success when Google mirror fails',()=>{assert.match(src,/if\(requireMirror\)throw e/);assert.match(src,/export async function syncBackup\(a:Access\)\{return update\(a,\(\)=>\(\{ok:true\}\),true\)\}/)});
+import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+const src=fs.readFileSync(new URL('../lib/store.ts',import.meta.url),'utf8');
+test('manual readable-tab sync awaits mirror and reports failure',()=>{assert.match(src,/if\(requireMirror\)await syncTenant\(sub,a.access\)/);assert.match(src,/export async function syncBackup\(a:Access\)\{return update\(a,\(\)=>\(\{ok:true\}\),true\)\}/)});
+test('normal writes mark durable pending before returning, maintenance retries',()=>{assert.match(src,/mirror_error='pending'/);assert.match(src,/if\(requireMirror\)await syncTenant/);const worker=fs.readFileSync(new URL('../lib/backup-maintenance.ts',import.meta.url),'utf8');assert.match(worker,/WHERE mirror_error IS NOT NULL/);assert.match(worker,/await syncTenant/);const workflow=fs.readFileSync(new URL('../.github/workflows/retry-sheet-backups.yml',import.meta.url),'utf8');assert.match(workflow,/schedule:/)});

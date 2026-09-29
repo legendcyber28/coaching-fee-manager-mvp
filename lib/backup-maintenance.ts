@@ -1,0 +1,4 @@
+import {db,schema} from './db';
+import {token,tokenClient,clientId,unseal} from './google';
+import {syncTenant} from './store';
+export async function retryBackups(limit=5){await schema();const sql=db();const rows=await sql`SELECT sub,refresh_cipher FROM tenants WHERE mirror_error IS NOT NULL AND deleted_at IS NULL ORDER BY last_mirror_at NULLS FIRST LIMIT ${limit}`;let synced=0,failed=0;for(const row of rows){try{const saved=unseal<{refresh:string}>(row.refresh_cipher);if(!saved?.refresh)throw Error('Google authorization missing');const credential=await token(new URLSearchParams({client_id:clientId(),client_secret:tokenClient(),grant_type:'refresh_token',refresh_token:saved.refresh}));await syncTenant(row.sub,credential.access_token);synced++}catch{failed++}}return {checked:rows.length,synced,failed}}

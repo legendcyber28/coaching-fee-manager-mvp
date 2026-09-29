@@ -55,3 +55,8 @@
 @media(max-width:700px){.backup-sync{margin-left:0;width:100%}.backup-panel .primary{width:100%}}
 .scroll-hint{display:none;color:var(--sub);font-size:11px;margin:4px 0 10px}
 @media(max-width:700px){.scroll-hint{display:block}.backup-panel .table-wrap{overflow-x:auto;overscroll-behavior-inline:contain}.backup-panel .table-wrap table{min-width:890px}}
+
+.login-card a:not(.primary){color:var(--accent)}
+.login-card a:not(.primary):hover{text-decoration-thickness:2px}
+
+.batch-picker{border:1px solid var(--line);border-radius:8px;display:grid;gap:8px;padding:12px;max-height:220px;overflow:auto}.batch-picker legend{font-size:11px;color:var(--sub);font-weight:700}.batch-picker label{display:flex;align-items:center;gap:8px}.batch-picker input{min-width:auto}
