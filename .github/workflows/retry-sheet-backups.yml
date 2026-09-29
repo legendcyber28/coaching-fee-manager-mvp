@@ -1,0 +1,19 @@
+name: Retry pending Fee Manager Sheet backups
+on:
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync pending Google Sheets
+        env:
+          PURGE_JOB_SECRET: ${{ secrets.PURGE_JOB_SECRET }}
+          FEE_APP_ORIGIN: ${{ vars.FEE_APP_ORIGIN }}
+        run: |
+          test -n "$FEE_APP_ORIGIN" || { echo 'Missing FEE_APP_ORIGIN'; exit 1; }
+          test -n "$PURGE_JOB_SECRET" || { echo 'Missing PURGE_JOB_SECRET'; exit 1; }
+          curl --fail --show-error --silent --max-time 110 --retry 2 --retry-delay 5 \
+            -X POST "${FEE_APP_ORIGIN%/}/api/maintenance/backup" \
+            -H "Authorization: Bearer $PURGE_JOB_SECRET"
