@@ -1,0 +1,4 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+const admin=readFileSync(new URL('../app/api/admin/route.ts',import.meta.url),'utf8');const plan=readFileSync(new URL('../app/api/plan/route.ts',import.meta.url),'utf8');const ui=readFileSync(new URL('../app/page.tsx',import.meta.url),'utf8');
+test('owner is not returned as a customer',()=>assert.match(admin,/FROM tenants WHERE sub<>\$\{a\.session\.sub\} ORDER BY created_at DESC/));
+test('owner plan bypasses customer billing and suspension',()=>{assert.match(plan,/if\(owner\)return NextResponse\.json\(\{status:'admin',owner:true,pricePaise:0,trialDays:0,graceDays:0/);assert.ok(plan.indexOf('if(owner)return')<plan.indexOf('billing('));assert.match(ui,/Customer trial, grace period, and ₹1,000 monthly maintenance do not apply/)});

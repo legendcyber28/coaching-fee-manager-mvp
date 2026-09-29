@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';const src=fs.readFileSync(new URL('../lib/store.ts',import.meta.url),'utf8');
+test('manual readable-tab sync cannot claim success when Google mirror fails',()=>{assert.match(src,/if\(requireMirror\)throw e/);assert.match(src,/export async function syncBackup\(a:Access\)\{return update\(a,\(\)=>\(\{ok:true\}\),true\)\}/)});
