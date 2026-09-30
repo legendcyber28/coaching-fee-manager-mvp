@@ -3,6 +3,7 @@ import {NextResponse} from 'next/server';
 import {dateOnly,feeStatus,monthValid,toPaise} from './core';
 import {randomUUID} from 'node:crypto';
 import {db,schema,isOwner} from './db';
+import {requireEntitlement,requireEntitlementInTransaction} from './entitlements';
 
 type Row=Record<string,any>;
 type State={version:1;batches:Row[];students:Row[];fees:Row[];payments:Row[];receipts:Row[];expenses?:Row[];attendance?:Row[];profile?:{photo:string;instituteName?:string}};
@@ -95,16 +96,16 @@ export async function access(){return googleAccess()}
 type Access=NonNullable<Awaited<ReturnType<typeof googleAccess>>>;
 async function tenant(a:Access){await schema();const sql=db();const sub=a.session.sub;let rows=await sql`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub}`;if(!rows.length){
  // Serialize first-use migration by immutable Google sub across every app instance.
- await sql.begin(async tx=>{await tx`SELECT pg_advisory_xact_lock(hashtextextended(${sub},0))`;const exists=await tx`SELECT sub FROM tenants WHERE sub=${sub}`;if(exists.length)return;const old=await load(a.access);const state=validateBackup(old.state);await tx`INSERT INTO tenants(sub,email,name,data,sheet_id,refresh_cipher) VALUES(${sub},${a.session.email},${a.session.name},${tx.json(state)},${old.id},${seal({refresh:a.session.refresh})})`});rows=await sql`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub}`;
+ await sql.begin(async tx=>{await tx`SELECT pg_advisory_xact_lock(hashtextextended(${sub},0))`;const exists=await tx`SELECT sub FROM tenants WHERE sub=${sub}`;if(exists.length)return;const old=await load(a.access);const state=validateBackup(old.state);await tx`INSERT INTO tenants(sub,email,name,data,sheet_id,refresh_cipher,connector_signup) VALUES(${sub},${a.session.email},${a.session.name},${tx.json(state)},${old.id},${seal({refresh:a.session.refresh})},true)`});rows=await sql`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub}`;
  }
  if(rows[0].deleted_at)throw Error('This account is pending deletion. Contact support.');
  if(rows[0].suspended && !(await isOwner(sub,a.session.email)))throw Error('This account is suspended. Contact the app owner. Your data is not deleted.');
  return rows[0];}
-export async function readStore(a:Access){return (await tenant(a)).data as State}
+export async function readStore(a:Access,workspace=true){if(workspace)await requireEntitlement(a.session);return (await tenant(a)).data as State}
 export function getResult(s:State,resource:string,url:URL){return output(s,resource,url)}
 /** Sync the newest committed tenant state; the row lock prevents an older mirror overtaking newer data. */
 export async function syncTenant(sub:string,access:string){await schema();const sql=db();try{await sql.begin(async tx=>{const [current]=await tx`SELECT data,sheet_id,mirror_error,deleted_at FROM tenants WHERE sub=${sub} FOR UPDATE`;if(!current?.mirror_error||current.deleted_at)return;const old=await load(access);await save(access,old.id,current.data as State,old.oldCount);await tx`UPDATE tenants SET sheet_id=${old.id},mirror_error=NULL,last_mirror_at=now() WHERE sub=${sub}`})}catch(e){await sql`UPDATE tenants SET mirror_error=${e instanceof Error?e.message.slice(0,180):'Sheet sync failed'} WHERE sub=${sub} AND mirror_error='pending'`.catch(()=>{});throw e}}
-async function update(a:Access,changeState:(state:State)=>unknown,requireMirror=false){await tenant(a);const sql=db();const sub=a.session.sub;const result=await sql.begin(async tx=>{const [row]=await tx`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub} FOR UPDATE`;if(!row||row.deleted_at||row.suspended&&!(await isOwner(sub,a.session.email)))throw Error('Account unavailable');const state=row.data as State;const result=changeState(state);await tx`UPDATE tenants SET data=${tx.json(state)},email=${a.session.email},name=${a.session.name},mirror_error='pending' WHERE sub=${sub}`;return result});
+async function update(a:Access,changeState:(state:State)=>unknown,requireMirror=false){await requireEntitlement(a.session);await tenant(a);const sql=db();const sub=a.session.sub;const owner=await isOwner(sub,a.session.email);const result=await sql.begin(async tx=>{await requireEntitlementInTransaction(a.session,tx,owner);const [row]=await tx`SELECT data,suspended,deleted_at FROM tenants WHERE sub=${sub} FOR UPDATE`;if(!row||row.deleted_at||row.suspended&&!(await isOwner(sub,a.session.email)))throw Error('Account unavailable');const state=row.data as State;const result=changeState(state);await tx`UPDATE tenants SET data=${tx.json(state)},email=${a.session.email},name=${a.session.name},mirror_error='pending' WHERE sub=${sub}`;return result});
  // Mutations acknowledge the committed central DB immediately. Pending mirror work is durable in the tenant row and retried by maintenance.
  if(requireMirror)await syncTenant(sub,a.access);
  return result;}
