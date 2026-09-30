@@ -73,3 +73,6 @@
 .purchase-dialog{max-height:90vh;overflow-y:auto}.upi-qr{display:block;max-width:180px;max-height:360px;object-fit:contain;margin:15px auto;border-radius:8px}.purchase-dialog code{overflow-wrap:anywhere}.purchase-dialog input[type="checkbox"]{width:auto;margin-right:7px}.purchase-dialog label{display:block;margin:12px 0}.purchase-dialog input:not([type="checkbox"]){display:block;width:100%;margin-top:5px}.purchase-plan-card button{border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--text);padding:9px 12px;cursor:pointer}
 
 .coaching-settings-panel{padding:24px}.coaching-settings-panel h2{margin-top:0}.coaching-settings-panel form{max-width:640px}.coaching-settings-panel form button{margin-top:12px}.coaching-settings-panel input{width:100%}
+/* Store renewal actions stay spaced and readable on narrow screens. */
+.store-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 18px;align-items:center}
+a.primary.store-link{display:inline-flex;align-items:center;text-decoration:none;line-height:1.4}
