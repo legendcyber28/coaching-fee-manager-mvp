@@ -1,0 +1,12 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+const src=fs.readFileSync(new URL('../lib/store.ts',import.meta.url),'utf8');
+const extract=(name,next)=>src.slice(src.indexOf('export function '+name),src.indexOf(next,src.indexOf('export function '+name))).replace('export ','');
+// Exercise the same profile validation and mutation branch without database or OAuth.
+const checkedPhoto=new Function('value',src.slice(src.indexOf('function checkedPhoto(value:unknown){')+'function checkedPhoto(value:unknown){'.length,src.indexOf('\nfunction required')) .slice(0,-1));
+const nameBody=src.slice(src.indexOf('function checkedInstituteName(value:unknown,allowEmpty=false){')+'function checkedInstituteName(value:unknown,allowEmpty=false){'.length,src.indexOf('\nfunction change')).slice(0,-1);
+const checkedInstituteName=new Function('value','allowEmpty',nameBody);
+const profileBranch=src.slice(src.indexOf("if(method==='PATCH'&&resource==='profile'){"),src.indexOf('const now=new Date().toISOString();',src.indexOf('function change')));
+const patch=new Function('s','b','checkedPhoto','checkedInstituteName',"const method='PATCH',resource='profile';"+profileBranch);
+test('coaching profile edits preserve photo and photo changes preserve coaching name',()=>{const s={profile:{photo:'',instituteName:'First Coaching'}};patch(s,{instituteName:' New Coaching '},checkedPhoto,checkedInstituteName);assert.equal(s.profile.instituteName,'New Coaching');patch(s,{photo:''},checkedPhoto,checkedInstituteName);assert.equal(s.profile.instituteName,'New Coaching');for(const name of ['', ' '.repeat(4), 'a'.repeat(121),'Name\nFake'])assert.throws(()=>patch(s,{instituteName:name},checkedPhoto,checkedInstituteName));});
+test('receipt name is tenant-specific and no longer uses shared demo environment',()=>{const r=src.slice(src.indexOf('export function receipt('),src.indexOf('export async function access'));assert.match(r,/s\.profile\?\.instituteName/);assert.doesNotMatch(r,/process\.env\.INSTITUTE_NAME|ABC Coaching/);assert.match(src,/instituteName:x\.profile\?\.instituteName/)});
+test('customer portal first-use resolves tenant before querying plans',()=>{const portal=fs.readFileSync(new URL('../app/api/customer-portal/route.ts',import.meta.url),'utf8');assert.match(portal,/await readStore\(a\);return a/);const ui=fs.readFileSync(new URL('../app/page.tsx',import.meta.url),'utf8');assert.match(ui,/await refresh\(\);\s*if\(active\)await loadCustomerPortal/);assert.match(ui,/Retry plans/)});
