@@ -76,3 +76,6 @@
 /* Store renewal actions stay spaced and readable on narrow screens. */
 .store-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 18px;align-items:center}
 a.primary.store-link{display:inline-flex;align-items:center;text-decoration:none;line-height:1.4}
+.trial-payment-dialog .dialog-head{display:flex;align-items:flex-start;gap:14px}
+.trial-payment-dialog .dialog-head h2{flex:1;min-width:0;margin-right:0}
+.trial-payment-dialog .dialog-head button{position:static;flex-shrink:0}

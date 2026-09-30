@@ -27,7 +27,7 @@ export async function identityEntitlement(sub:string,issuer=GOOGLE_ISSUER,sql:SQ
  const mode=process.env.NEW_SIGNUP_ACCESS_MODE||'LEGACY';
  if(tenant&&!tenant.connector_signup||mode==='LEGACY')return {managed:false,active:true,source:'LEGACY',startsAt:null,expiresAt:null};
  if(tenant?.paid_through&&sqlDate(tenant.paid_through)!>=dayInIndia(new Date()))return {managed:true,active:true,source:'LEGACY_PAID',startsAt:null,expiresAt:sqlDate(tenant.paid_through)};
- if(mode==='TRIAL'){const [settings]=await sql`SELECT trial_days FROM admin_settings WHERE singleton=true`;const due=tenant?billing(new Date(tenant.created_at),null,dayInIndia(new Date()),Number(settings.trial_days)+Number(tenant.trial_extension_days||0)).due:null;return {managed:true,active:!due||dayInIndia(new Date())<due,source:'TRIAL',startsAt:null,expiresAt:due}}
+ if(mode==='TRIAL'){const start=tenant?new Date(tenant.created_at).getTime():null;const end=start===null?null:start+3*86400000;return {managed:true,active:end===null||Date.now()<end,source:'TRIAL',startsAt:start===null?null:new Date(start).toISOString(),expiresAt:end===null?null:new Date(end).toISOString()}}
  return {managed:true,active:false,source:'STORE_REQUIRED',startsAt:null,expiresAt:null};
  }
  const [current]=await sql`SELECT starts_at,expires_at FROM store_entitlement_orders WHERE google_issuer=${issuer} AND google_sub=${sub} AND revoked=false AND starts_at<=now() AND expires_at>now() ORDER BY expires_at DESC LIMIT 1`;
