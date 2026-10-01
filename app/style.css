@@ -112,3 +112,38 @@ a.primary.store-link{display:inline-flex;align-items:center;text-decoration:none
  .admin-shell .admin-customers td.actions button{min-height:44px;max-width:100%;white-space:normal}
 }
 @media(max-width:700px){.dialog .form-actions{flex-wrap:wrap}.dialog .form-actions button{max-width:100%;white-space:normal;min-height:44px}.dialog .receipt-total{gap:10px;flex-wrap:wrap}}
+/* A visible desktop sidebar leaves too little workspace at tablet widths. */
+@media(min-width:701px) and (max-width:1100px){
+ .app .topbar{padding:0 18px;gap:10px}
+ .app .breadcrumb,.app .admin-label,.app .admin-identity{display:none}
+ .app .top-actions{margin-left:auto;gap:9px}
+ .app .content{padding-left:18px;padding-right:18px}
+ .app .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .app .metric{min-width:0;padding:16px}
+ .app .metric strong{font-size:20px}
+ .app .metric-top{flex-wrap:wrap}
+ .app .metric small{overflow-wrap:anywhere}
+}
+
+/* Tablet pending-fee cards keep balances and actions together. */
+/* Pending balances are complete, labelled cards on small screens. */
+@media(min-width:701px) and (max-width:1100px){
+ .pending-fees-panel .table-wrap{overflow:visible;padding:0 16px 16px}
+ .pending-fees-panel table,.pending-fees-panel tbody,.pending-fees-panel tr,.pending-fees-panel td{display:block;width:100%;min-width:0;white-space:normal}
+ .pending-fees-panel thead{display:none}
+ .pending-fees-panel tr{border:1px solid var(--line);border-radius:12px;margin-top:14px;padding:12px;background:var(--surface)}
+ .pending-fees-panel td{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;border:0;padding:6px 0;overflow-wrap:anywhere}
+ .pending-fees-panel td:before{content:attr(data-label);font-size:11px;color:var(--sub);font-weight:700}
+ .pending-fees-panel td:first-child{display:block;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:6px}
+ .pending-fees-panel td:first-child:before{display:none}
+ .pending-fees-panel td:first-child b{font-size:14px;display:block}
+ .pending-fees-panel td.actions{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px;margin-top:6px;gap:10px;max-width:none}
+ .pending-fees-panel td.actions:before{display:none}
+ .pending-fees-panel td.actions button{min-height:44px;padding:8px 16px;border:1px solid var(--accent);border-radius:8px;color:var(--accent);background:var(--accent2)}
+ .pending-fees-panel .filters input,.pending-fees-panel .filters select{min-width:0}
+}
+
+@media(min-width:701px) and (max-width:1100px){.pending-fees-panel .panel-title{display:block}.pending-fees-panel .panel-title>select{margin:12px 0}.pending-fees-panel .filters{width:100%;flex-wrap:wrap}.pending-fees-panel .filters input,.pending-fees-panel .filters select{flex:1;max-width:none}}
+@media(min-width:701px) and (max-width:1100px){.admin-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-stat{min-width:0}.admin-stat strong{font-size:28px;overflow-wrap:anywhere}.admin-overview-grid{grid-template-columns:1fr}}
+
+.student-avatar-picker{display:flex;gap:16px;flex-wrap:wrap;border:1px solid var(--border);padding:12px;border-radius:12px}.student-avatar-picker label{display:flex;align-items:center;gap:8px}.student-avatar-picker img{width:48px;height:48px;border-radius:50%}
